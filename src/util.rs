@@ -25,19 +25,19 @@ pub fn print_result(r: Response, resource_name: String, op: Verbs) {
     match op {
         Verbs::create => match r.status() {
             StatusCode::CREATED => println!("{} created.", resource_name),
-            r => log::error!("Error : {}", r),
+            r => print_error(r),
         },
         Verbs::delete => match r.status() {
             StatusCode::NO_CONTENT => println!("{} deleted.", resource_name),
-            r => log::error!("Error : {}", r),
+            r => print_error(r),
         },
         Verbs::get => match r.status() {
             StatusCode::OK => show_json(r.text().expect("Empty response")),
-            r => log::error!("Error : {}", r),
+            r => print_error(r),
         },
         Verbs::edit => match r.status() {
             StatusCode::NO_CONTENT => println!("{} updated.", resource_name),
-            r => log::error!("Error : {}", r),
+            r => print_error(r),
         },
     }
 }
@@ -52,6 +52,14 @@ fn show_json<S: Into<String>>(payload: S) {
         // fall back to plain text output
         Err(_) => println!("{}", payload),
     }
+}
+
+fn print_error(r: reqwest::StatusCode) {
+    log::error!("Error : {}", r);
+    if r.as_u16() == 403 {
+        exit(4)
+    }
+    exit(2)
 }
 
 // todo : assume https as the default scheme
