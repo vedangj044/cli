@@ -30,6 +30,7 @@ pub enum Parameters {
     data,
     config,
     filename,
+    command,
 }
 
 #[derive(AsRefStr, EnumString)]
@@ -38,6 +39,7 @@ pub enum Other_commands {
     login,
     token,
     version,
+    send,
 }
 
 pub fn parse_arguments() -> ArgMatches<'static> {
@@ -46,6 +48,7 @@ pub fn parse_arguments() -> ArgMatches<'static> {
         .help("The unique id of the resource.");
 
     let url_arg = Arg::with_name(Parameters::url.as_ref())
+        .takes_value(true)
         .required(true)
         .help("The url of the drogue cloud api endpoint");
 
@@ -66,6 +69,10 @@ pub fn parse_arguments() -> ArgMatches<'static> {
         .long(Parameters::filename.as_ref())
         .takes_value(true)
         .help("file that contains the data to update the resource with.");
+
+    let command_arg = Arg::with_name(Parameters::command.as_ref())
+        .long(Parameters::command.as_ref())
+        .takes_value(true);
 
     let config_file_arg = Arg::with_name(Parameters::config.as_ref())
         .long(Parameters::config.as_ref())
@@ -170,6 +177,19 @@ pub fn parse_arguments() -> ArgMatches<'static> {
         .subcommand(
             SubCommand::with_name(Other_commands::token.as_ref())
                 .about("Print a valid bearer token for the drogue cloud instance."),
+        )
+        .subcommand(
+            SubCommand::with_name(Other_commands::send.as_ref())
+                .about("Send a command message to a device")
+                .subcommand(
+                    SubCommand::with_name(Resources::device.as_ref())
+                        .about("The device to send command")
+                        .arg(resource_id_arg.clone())
+                        .arg(app_id_arg.clone())
+                        .arg(url_arg.long("url").clone())
+                        .arg(command_arg.clone())
+                        .arg(data_arg.clone())
+                )  
         )
         .get_matches()
 }

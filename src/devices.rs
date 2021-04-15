@@ -55,6 +55,42 @@ pub fn create(
         .map(|res| util::print_result(res, format!("Device {}", device_id), Verbs::create))
 }
 
+pub fn send_command(
+    config: &Config, 
+    app: &AppId, 
+    device_id: &DeviceId, 
+    command_endpoint_url: &Url,
+    command: &str, 
+    command_body: &serde_json::Value
+) -> Result<()> {
+
+    let client = Client::new();
+    let url =  format!("{}command", command_endpoint_url);
+    
+    match get(&config, app, device_id) {
+        Ok(_) => {
+            println!("Doen {} {} {} {} {}", app, device_id, url, command, command_body);
+            client
+                .post(&url)
+                .query(&[("application", &app), ("device", &device_id), ("command", &command)])
+                .bearer_auth(&config.token.access_token().secret())
+                .body(command_body.to_string())
+                .send()
+                .context("Can't send command")
+                .map(|res| {
+                    match res.status() {
+                        reqwest::StatusCode::ACCEPTED => println!("Command send"),
+                        _ => println!("Error: {}", res.status())
+                    }
+                })
+        }
+        Err(e) => {
+            log::error!("Error : could not retrieve device: {}", e);
+            exit(2)
+        }
+    }
+}
+
 pub fn edit(config: &Config, app: &AppId, device_id: &DeviceId, file: Option<&str>) -> Result<()> {
     match file {
         Some(f) => {
@@ -121,3 +157,5 @@ fn put(
             device_id
         ))
 }
+
+

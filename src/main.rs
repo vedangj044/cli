@@ -49,6 +49,29 @@ fn main() -> Result<()> {
         exit(0);
     }
 
+    if matches.is_present(Other_commands::send) {
+        let(_, submatches) = matches.subcommand();
+
+        let(cmd, submatches) = submatches.unwrap().subcommand();
+        let sub_command = submatches.unwrap();
+
+        println!("{}", cmd);
+
+        if cmd == Resources::device.as_ref() {
+            let device_id = sub_command.value_of(Parameters::id).unwrap();
+            let app_id = arguments::get_app_id(&sub_command, &config)?;
+            let command = sub_command.value_of(Parameters::command).unwrap();
+            let url = util::url_validation(submatches.unwrap().value_of(Parameters::url).unwrap())?;
+           
+            let data = util::json_parse(sub_command.value_of(Parameters::data))?;
+            
+
+            devices::send_command(&config, &app_id, &device_id, &url, &command, &data)?;
+            exit(0)
+        }
+
+    }
+
     match matches.subcommand() {
         (cmd_name, sub_cmd) => {
             let verb = Verbs::from_str(cmd_name);
